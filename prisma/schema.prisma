@@ -109,6 +109,7 @@ model Role {
   permission_roles PermissionRole[]
   role_users       RoleUser[]
   permissions      Permission[]
+  project_members  ProjectMember[]
 
   @@map("roles")
 }
@@ -226,6 +227,25 @@ model Project {
   @@map("projects")
 }
 
+// this table stores list of project members
+model ProjectMember {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  status     Int?     @default(1) @db.SmallInt
+
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  project_id String?
+  project    Project? @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  role_id String?
+  role    Role?   @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@map("project_members")
+}
+
 // task table
 model Task {
   id         String    @id @default(cuid())
@@ -270,23 +290,6 @@ model TaskDependency {
   task    Task?   @relation(fields: [task_id], references: [id], onDelete: Cascade)
 
   @@map("task_dependencies")
-}
-
-
-// this table stores list of project members
-model ProjectMember {
-  id         String   @id @default(cuid())
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
-  status     Int?     @default(1) @db.SmallInt
-
-  user_id String?
-  user    User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  project_id String?
-  project    Project? @relation(fields: [project_id], references: [id], onDelete: Cascade)
-
-  @@map("project_members")
 }
 
 // comment table

@@ -25,7 +25,6 @@ export class SeedCommand extends CommandRunner {
         await this.roleSeed();
         await this.permissionSeed();
         await this.userSeed();
-        // await this.roleUserSeed();
         await this.permissionRoleSeed();
       });
 
@@ -52,21 +51,6 @@ export class SeedCommand extends CommandRunner {
     });
   }
 
-  async roleUserSeed() {
-    await this.prisma.roleUser.create({
-      data: {
-        user_id: '1',
-        role_id: '1',
-      },
-    });
-    // await this.prisma.roleUser.create({
-    //   data: {
-    //     user_id: 2,
-    //     role_id: 2,
-    //   },
-    // });
-  }
-
   async permissionSeed() {
     let i = 0;
     const permissions = [];
@@ -76,8 +60,16 @@ export class SeedCommand extends CommandRunner {
       // end (system level )super admin level permission
       { title: 'user_management', subject: 'User' },
       { title: 'role_management', subject: 'Role' },
-      // Group
-      { title: 'group_management', subject: 'Group' },
+      // Project
+      { title: 'Project', subject: 'Project' },
+      // Task
+      {
+        title: 'Task',
+        subject: 'Task',
+        scope: ['read', 'create', 'update', 'show', 'delete', 'assign'],
+      },
+      // Comment
+      { title: 'Comment', subject: 'Comment' },
     ];
 
     for (const permissionGroup of permissionGroups) {
@@ -115,12 +107,12 @@ export class SeedCommand extends CommandRunner {
 
   async permissionRoleSeed() {
     const all_permissions = await this.prisma.permission.findMany();
-    // const su_admin_permissions = all_permissions.filter(function (permission) {
-    //   return permission.title.substring(0, 25) == 'system_tenant_management_';
-    // });
-    const su_admin_permissions = all_permissions;
+    const su_admin_permissions = all_permissions.filter(function (permission) {
+      return permission.title.substring(0, 25) == 'system_tenant_management_';
+    });
+    // const su_admin_permissions = all_permissions;
 
-    // su admin permission
+    // -----su admin permission---
     const adminPermissionRoleArray = [];
     for (const su_admin_permission of su_admin_permissions) {
       adminPermissionRoleArray.push({
@@ -131,23 +123,97 @@ export class SeedCommand extends CommandRunner {
     await this.prisma.permissionRole.createMany({
       data: adminPermissionRoleArray,
     });
-    // admin
-    const tenant_admin_permissions = all_permissions.filter(
+    // -----------
+
+    // ---admin---
+    const project_admin_permissions = all_permissions.filter(
       function (permission) {
         return permission.title.substring(0, 25) != 'system_tenant_management_';
       },
     );
 
-    const tenantAdminPermissionRoleArray = [];
-    for (const admin_permission of tenant_admin_permissions) {
-      tenantAdminPermissionRoleArray.push({
+    const projectAdminPermissionRoleArray = [];
+    for (const admin_permission of project_admin_permissions) {
+      projectAdminPermissionRoleArray.push({
         role_id: '2',
         permission_id: admin_permission.id,
       });
     }
     await this.prisma.permissionRole.createMany({
-      data: tenantAdminPermissionRoleArray,
+      data: projectAdminPermissionRoleArray,
     });
+    // -----------
+
+    // ---project manager---
+    const project_manager_permissions = all_permissions.filter(
+      function (permission) {
+        return (
+          permission.title == 'project_read' ||
+          permission.title == 'project_show' ||
+          permission.title == 'project_update' ||
+          permission.title.substring(0, 4) == 'Task' ||
+          permission.title.substring(0, 7) == 'Comment'
+        );
+      },
+    );
+
+    const projectManagerPermissionRoleArray = [];
+    for (const project_manager_permission of project_manager_permissions) {
+      projectManagerPermissionRoleArray.push({
+        role_id: '3',
+        permission_id: project_manager_permission.id,
+      });
+    }
+    await this.prisma.permissionRole.createMany({
+      data: projectManagerPermissionRoleArray,
+    });
+    // -----------
+
+    // ---member---
+    const member_permissions = all_permissions.filter(function (permission) {
+      return (
+        permission.title == 'project_read' ||
+        permission.title == 'project_show' ||
+        permission.title == 'task_read' ||
+        permission.title == 'task_show' ||
+        permission.title == 'task_update' ||
+        permission.title.substring(0, 7) == 'comment'
+      );
+    });
+
+    const memberPermissionRoleArray = [];
+    for (const project_manager_permission of member_permissions) {
+      memberPermissionRoleArray.push({
+        role_id: '4',
+        permission_id: project_manager_permission.id,
+      });
+    }
+    await this.prisma.permissionRole.createMany({
+      data: memberPermissionRoleArray,
+    });
+    // -----------
+
+    // ---viewer---
+    const viewer_permissions = all_permissions.filter(function (permission) {
+      return (
+        permission.title == 'project_read' ||
+        permission.title == 'project_show' ||
+        permission.title == 'task_read' ||
+        permission.title == 'comment_read'
+      );
+    });
+
+    const viewerPermissionRoleArray = [];
+    for (const viewer_permission of viewer_permissions) {
+      viewerPermissionRoleArray.push({
+        role_id: '5',
+        permission_id: viewer_permission.id,
+      });
+    }
+    await this.prisma.permissionRole.createMany({
+      data: viewerPermissionRoleArray,
+    });
+    // -----------
   }
 
   async roleSeed() {
@@ -157,7 +223,7 @@ export class SeedCommand extends CommandRunner {
         {
           id: '1',
           title: 'Super Admin', // system admin, do not assign to a tenant/user
-          name: 'su-admin',
+          name: 'su_admin',
         },
         // organization role
         {
@@ -167,8 +233,18 @@ export class SeedCommand extends CommandRunner {
         },
         {
           id: '3',
-          title: 'Moderator',
-          name: 'moderator',
+          title: 'Project Manager',
+          name: 'project_manager',
+        },
+        {
+          id: '4',
+          title: 'Member',
+          name: 'member',
+        },
+        {
+          id: '5',
+          title: 'Viewer',
+          name: 'viewer',
         },
       ],
     });
