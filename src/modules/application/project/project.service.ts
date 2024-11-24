@@ -41,7 +41,7 @@ export class ProjectService extends PrismaClient {
   }
 
   async findAll(user_id: string) {
-    const projects = await this.project.findMany({
+    const projects = await this.prisma.project.findMany({
       where: {
         user_id,
       },
@@ -58,7 +58,7 @@ export class ProjectService extends PrismaClient {
   }
 
   async findOne(id: string, user_id: string) {
-    const project = await this.project.findFirst({
+    const project = await this.prisma.project.findFirst({
       where: {
         id: id,
         user_id,
@@ -86,7 +86,7 @@ export class ProjectService extends PrismaClient {
     const { name, description } = updateProjectDto;
 
     // check if project exists
-    const projectExists = await this.project.findFirst({
+    const projectExists = await this.prisma.project.findFirst({
       where: {
         id: id,
         user_id,
@@ -101,7 +101,7 @@ export class ProjectService extends PrismaClient {
     }
 
     // check if the user is the member of the project
-    const isMember = await this.projectMember.findFirst({
+    const isMember = await this.prisma.projectMember.findFirst({
       where: {
         user_id,
         project_id: id,
@@ -124,7 +124,7 @@ export class ProjectService extends PrismaClient {
       data['description'] = description;
     }
 
-    await this.project.update({
+    await this.prisma.project.update({
       where: {
         id,
       },
@@ -140,7 +140,7 @@ export class ProjectService extends PrismaClient {
   }
 
   async remove(id: string, user_id: string) {
-    const projectExists = await this.project.findFirst({
+    const projectExists = await this.prisma.project.findFirst({
       where: {
         id,
         user_id,
@@ -154,7 +154,7 @@ export class ProjectService extends PrismaClient {
       };
     }
 
-    await this.project.delete({
+    await this.prisma.project.delete({
       where: {
         id,
       },
