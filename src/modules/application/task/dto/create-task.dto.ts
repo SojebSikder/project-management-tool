@@ -11,7 +11,7 @@ export class CreateTaskDto {
   priority?: number;
 
   @ApiProperty()
-  user_id: string;
+  assigned_to: string;
 
   @ApiProperty()
   project_id: string;

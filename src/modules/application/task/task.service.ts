@@ -23,8 +23,8 @@ export class TaskService extends PrismaClient {
       if (createTaskDto.priority) {
         data['priority'] = createTaskDto.priority;
       }
-      if (createTaskDto.user_id) {
-        data['user_id'] = createTaskDto.user_id;
+      if (createTaskDto.assigned_to) {
+        data['assigned_to'] = createTaskDto.assigned_to;
       }
       if (createTaskDto.project_id) {
         data['project_id'] = createTaskDto.project_id;
@@ -58,7 +58,7 @@ export class TaskService extends PrismaClient {
       // check if user exists
       const user = await this.prisma.user.findUnique({
         where: {
-          id: createTaskDto.user_id,
+          id: createTaskDto.assigned_to,
         },
       });
 
@@ -177,6 +177,170 @@ export class TaskService extends PrismaClient {
       return {
         success: true,
         message: 'Task deleted successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
+  // add dependency
+  async addDependency(id: string, dependency_id: string, user_id: string) {
+    try {
+      const task = await this.prisma.task.findUnique({
+        where: {
+          id: id,
+        },
+      });
+
+      if (!task) {
+        return {
+          success: false,
+          message: 'Task does not exist',
+        };
+      }
+
+      const dependency = await this.prisma.task.findUnique({
+        where: {
+          id: dependency_id,
+        },
+      });
+
+      if (!dependency) {
+        return {
+          success: false,
+          message: 'Dependency does not exist',
+        };
+      }
+
+      await this.prisma.taskDependency.create({
+        data: {
+          task_id: id,
+          parent_task_id: dependency_id,
+        },
+      });
+
+      return {
+        success: true,
+        message: 'Dependency added successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
+  // remove dependency
+  async removeDependency(id: string, dependency_id: string, user_id: string) {
+    try {
+      const task = await this.prisma.task.findUnique({
+        where: {
+          id: id,
+        },
+      });
+
+      if (!task) {
+        return {
+          success: false,
+          message: 'Task does not exist',
+        };
+      }
+
+      const dependency = await this.prisma.task.findUnique({
+        where: {
+          id: dependency_id,
+        },
+      });
+
+      if (!dependency) {
+        return {
+          success: false,
+          message: 'Dependency does not exist',
+        };
+      }
+
+      await this.prisma.taskDependency.deleteMany({
+        where: {
+          task_id: id,
+          parent_task_id: dependency_id,
+        },
+      });
+
+      return {
+        success: true,
+        message: 'Dependency removed successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
+  // get dependencies
+  async getDependencies(id: string, user_id: string) {
+    try {
+      const task = await this.prisma.task.findUnique({
+        where: {
+          id: id,
+        },
+      });
+
+      if (!task) {
+        return {
+          success: false,
+          message: 'Task does not exist',
+        };
+      }
+
+      const dependencies = await this.prisma.taskDependency.findMany({
+        where: {
+          task_id: id,
+        },
+      });
+
+      return {
+        success: true,
+        data: dependencies,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
+  // get dependants
+  async getDependants(id: string, user_id: string) {
+    try {
+      const task = await this.prisma.task.findUnique({
+        where: {
+          id: id,
+        },
+      });
+
+      if (!task) {
+        return {
+          success: false,
+          message: 'Task does not exist',
+        };
+      }
+
+      const dependants = await this.prisma.taskDependency.findMany({
+        where: {
+          parent_task_id: id,
+        },
+      });
+
+      return {
+        success: true,
+        data: dependants,
       };
     } catch (error) {
       return {

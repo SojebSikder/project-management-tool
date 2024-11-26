@@ -114,4 +114,56 @@ export class TaskController {
       };
     }
   }
+
+  // add dependency
+  @ApiOperation({ summary: 'Add dependency' })
+  @CheckAbilities({ action: Action.Update, subject: 'Task' })
+  @Post(':id/dependency')
+  async addDependency(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body('dependency_id') dependency_id: string,
+  ) {
+    try {
+      const user_id = req.user.userId;
+      const task = await this.taskService.addDependency(
+        id,
+        dependency_id,
+        user_id,
+      );
+
+      return task;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
+  // remove dependency
+  @ApiOperation({ summary: 'Remove dependency' })
+  @CheckAbilities({ action: Action.Update, subject: 'Task' })
+  @Delete(':id/dependency/:dependency_id')
+  async removeDependency(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Param('dependency_id') dependency_id: string,
+  ) {
+    try {
+      const user_id = req.user.userId;
+      const task = await this.taskService.removeDependency(
+        id,
+        dependency_id,
+        user_id,
+      );
+
+      return task;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
 }

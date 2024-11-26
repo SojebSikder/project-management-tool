@@ -263,8 +263,8 @@ model Task {
   priority Int? @default(1)
 
   // task assigned to user
-  user_id String?
-  user    User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  assigned_to String?
+  user        User?   @relation(fields: [assigned_to], references: [id], onDelete: Cascade)
 
   project_id String?
   project    Project?  @relation(fields: [project_id], references: [id], onDelete: Cascade)
