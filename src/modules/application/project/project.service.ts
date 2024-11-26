@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+import { ProjectRepository } from '../../../common/repository/project/project.repository';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { PrismaClient } from '@prisma/client';
-import { ProjectRepository } from 'src/common/repository/project/project.repository';
+import { AddMemberProjectDto } from './dto/add-member-project.dto';
+import { UserRepository } from 'src/common/repository/user/user.repository';
 
 @Injectable()
 export class ProjectService extends PrismaClient {
@@ -136,6 +138,152 @@ export class ProjectService extends PrismaClient {
     return {
       success: true,
       message: 'Project updated successfully',
+    };
+  }
+
+  async addMember(user_id: string, addMemberProjectDto: AddMemberProjectDto) {
+    // check if the project exists
+    const projectExists = await this.prisma.project.findFirst({
+      where: {
+        id: addMemberProjectDto.project_id,
+        user_id: user_id,
+      },
+    });
+
+    if (!projectExists) {
+      return {
+        success: false,
+        message: 'Project not found',
+      };
+    }
+
+    // check if the user is the member of the project
+    const memberExists = await this.prisma.projectMember.findFirst({
+      where: {
+        user_id: user_id,
+        project_id: addMemberProjectDto.project_id,
+      },
+    });
+
+    if (!memberExists) {
+      return {
+        success: false,
+        message: 'You are not allowed to add member to this project',
+      };
+    }
+
+    const userDetails = await UserRepository.getUserByEmail(
+      addMemberProjectDto.email,
+    );
+
+    if (!userDetails) {
+      return {
+        success: false,
+        message: 'User not found',
+      };
+    }
+
+    // check if the member  is the member of the project
+    const isMember = await this.prisma.projectMember.findFirst({
+      where: {
+        user_id: userDetails.id,
+        project_id: addMemberProjectDto.project_id,
+      },
+    });
+
+    if (isMember) {
+      return {
+        success: false,
+        message: 'Member already exists',
+      };
+    }
+
+    // add member to project
+    await this.prisma.projectMember.create({
+      data: {
+        user_id: userDetails.id,
+        project_id: addMemberProjectDto.project_id,
+        role_id: addMemberProjectDto.role_id,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Member added successfully',
+    };
+  }
+
+  async removeMember(
+    user_id: string,
+    addMemberProjectDto: AddMemberProjectDto,
+  ) {
+    // check if the project exists
+    const projectExists = await this.prisma.project.findFirst({
+      where: {
+        id: addMemberProjectDto.project_id,
+        user_id: user_id,
+      },
+    });
+
+    if (!projectExists) {
+      return {
+        success: false,
+        message: 'Project not found',
+      };
+    }
+
+    // check if the user is the member of the project
+    const memberExists = await this.prisma.projectMember.findFirst({
+      where: {
+        user_id: user_id,
+        project_id: addMemberProjectDto.project_id,
+      },
+    });
+
+    if (!memberExists) {
+      return {
+        success: false,
+        message: 'You are not allowed to remove member from this project',
+      };
+    }
+
+    const userDetails = await UserRepository.getUserByEmail(
+      addMemberProjectDto.email,
+    );
+
+    if (!userDetails) {
+      return {
+        success: false,
+        message: 'User not found',
+      };
+    }
+
+    // check if the member is the member of the project
+    const isMember = await this.prisma.projectMember.findFirst({
+      where: {
+        user_id: userDetails.id,
+        project_id: addMemberProjectDto.project_id,
+      },
+    });
+
+    if (!isMember) {
+      return {
+        success: false,
+        message: 'Member not found',
+      };
+    }
+
+    // remove member from project
+    await this.prisma.projectMember.deleteMany({
+      where: {
+        user_id: userDetails.id,
+        project_id: addMemberProjectDto.project_id,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Member removed successfully',
     };
   }
 

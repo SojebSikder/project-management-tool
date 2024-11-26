@@ -7,6 +7,20 @@ const prisma = new PrismaClient();
 
 export class UserRepository {
   /**
+   * get user by email
+   * @param email
+   * @returns
+   */
+  static async getUserByEmail(email: string) {
+    const user = await prisma.user.findFirst({
+      where: {
+        email: email,
+      },
+    });
+    return user;
+  }
+
+  /**
    * get user details
    * @returns
    */

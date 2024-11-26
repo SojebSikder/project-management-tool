@@ -18,6 +18,7 @@ import { Action } from '../../../ability/ability.factory';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { AddMemberProjectDto } from './dto/add-member-project.dto';
 
 @ApiBearerAuth()
 @ApiTags('Project')
@@ -27,7 +28,7 @@ export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @ApiOperation({ summary: 'Create project' })
-  @CheckAbilities({ action: Action.Create, subject: 'Project' })
+  // @CheckAbilities({ action: Action.Create, subject: 'Project' })
   @Post()
   async create(
     @Req() req: Request,
@@ -100,6 +101,52 @@ export class ProjectController {
         id,
         user_id,
         updateProjectDto,
+      );
+
+      return project;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
+  @ApiOperation({ summary: 'Add member to project' })
+  @CheckAbilities({ action: Action.Create, subject: 'Project' })
+  @Post('add-member')
+  async addMember(
+    @Req() req: Request,
+    @Body() addMemberProjectDto: AddMemberProjectDto,
+  ) {
+    try {
+      const user_id = req.user.userId;
+      const project = await this.projectService.addMember(
+        user_id,
+        addMemberProjectDto,
+      );
+
+      return project;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
+  @ApiOperation({ summary: 'Remove member from project' })
+  @CheckAbilities({ action: Action.Create, subject: 'Project' })
+  @Post('remove-member')
+  async removeMember(
+    @Req() req: Request,
+    @Body() addMemberProjectDto: AddMemberProjectDto,
+  ) {
+    try {
+      const user_id = req.user.userId;
+      const project = await this.projectService.removeMember(
+        user_id,
+        addMemberProjectDto,
       );
 
       return project;
