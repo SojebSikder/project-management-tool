@@ -41,4 +41,33 @@ export class ProjectRepository {
       return false;
     }
   }
+
+  static async checkProjectExists(project_id: string) {
+    const project = await prisma.project.findUnique({
+      where: {
+        id: project_id,
+      },
+    });
+
+    if (!project) {
+      return false;
+    }
+
+    return true;
+  }
+
+  static async checkProjectMember(user_id: string, project_id: string) {
+    const projectMember = await prisma.projectMember.findFirst({
+      where: {
+        user_id,
+        project_id,
+      },
+    });
+
+    if (!projectMember) {
+      return false;
+    }
+
+    return true;
+  }
 }
