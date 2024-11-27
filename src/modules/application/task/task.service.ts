@@ -4,10 +4,15 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { ProjectRepository } from '../../../common/repository/project/project.repository';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { NotificationGateway } from '../notification/notification.gateway';
+import { NotificationRepository } from '../../../common/repository/notification/project.repository';
 
 @Injectable()
 export class TaskService extends PrismaClient {
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationGateway: NotificationGateway,
+  ) {
     super();
   }
 
@@ -76,6 +81,26 @@ export class TaskService extends PrismaClient {
         },
       });
 
+      if (createTaskDto.assigned_to && createTaskDto.assigned_to != user_id) {
+        // Create notification
+        const notificationMessage = `You have been assigned a task: ${createTaskDto.title}`;
+
+        await NotificationRepository.createNotification({
+          sender_id: user_id,
+          receiver_id: createTaskDto.assigned_to,
+          text: notificationMessage,
+          type: 'task',
+        });
+
+        // Emit notification to assigned member
+        this.notificationGateway.server
+          .to(createTaskDto.assigned_to)
+          .emit('receiveNotification', {
+            message: notificationMessage,
+          });
+        // end create notification
+      }
+
       return {
         success: true,
         message: 'Task created successfully',
@@ -140,6 +165,78 @@ export class TaskService extends PrismaClient {
           ...updateTaskDto,
         },
       });
+
+      if (updateTaskDto.assigned_to && updateTaskDto.assigned_to != user_id) {
+        // Create notification for assigned member
+        const notificationMessage = `You have been assigned a task: ${updateTaskDto.title}`;
+
+        await NotificationRepository.createNotification({
+          sender_id: user_id,
+          receiver_id: updateTaskDto.assigned_to,
+          text: notificationMessage,
+          type: 'task',
+        });
+
+        // Emit notification to assigned member
+        this.notificationGateway.server
+          .to(updateTaskDto.assigned_to)
+          .emit('receiveNotification', {
+            message: notificationMessage,
+          });
+        // end create notification
+
+        // Create notification for previous assigned member
+        const notificationMessage2 = `You have been unassigned from a task: ${updateTaskDto.title}`;
+
+        await NotificationRepository.createNotification({
+          sender_id: user_id,
+          receiver_id: task.assigned_to,
+          text: notificationMessage2,
+          type: 'task',
+        });
+
+        // Emit notification to assigned member
+        this.notificationGateway.server
+          .to(task.assigned_to)
+          .emit('receiveNotification', {
+            message: notificationMessage2,
+          });
+        // end create notification
+      }
+
+      // send notification for task status change
+      if (
+        updateTaskDto.status &&
+        updateTaskDto.status != task.status &&
+        updateTaskDto.assigned_to == user_id
+      ) {
+        const projectMember = await this.prisma.projectMember.findMany({
+          where: {
+            user_id: user_id,
+          },
+        });
+
+        projectMember.map(async (member) => {
+          if (member.user_id != user_id) {
+            const notificationMessage = `Task status changed to: ${updateTaskDto.status}`;
+
+            await NotificationRepository.createNotification({
+              sender_id: user_id,
+              receiver_id: member.user_id,
+              text: notificationMessage,
+              type: 'task',
+            });
+
+            // Emit notification to assigned member
+            this.notificationGateway.server
+              .to(member.user_id)
+              .emit('receiveNotification', {
+                message: notificationMessage,
+              });
+            // end create notification
+          }
+        });
+      }
 
       return {
         success: true,
