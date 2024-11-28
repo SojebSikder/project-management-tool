@@ -51,7 +51,7 @@ export class NotificationGateway
       password: appConfig().redis.password,
     });
 
-    this.redisSubClient.subscribe('notification', (err, message) => {
+    this.redisSubClient.subscribe('notification', (err, message: string) => {
       const data = JSON.parse(message);
       this.server.emit('receiveNotification', data);
     });

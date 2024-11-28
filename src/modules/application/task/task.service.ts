@@ -77,7 +77,11 @@ export class TaskService extends PrismaClient {
       // create task
       await this.prisma.task.create({
         data: {
-          ...data,
+          title: createTaskDto.title,
+          description: createTaskDto.description,
+          priority: createTaskDto.priority,
+          assigned_to: createTaskDto.assigned_to,
+          project_id: createTaskDto.project_id,
         },
       });
 
