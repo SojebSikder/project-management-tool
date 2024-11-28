@@ -4,7 +4,6 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { UrlGeneratorModule } from 'nestjs-url-generator';
 
 // internal imports
 import appConfig from './config/app.config';
@@ -14,10 +13,8 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ThrottlerBehindProxyGuard } from './common/guard/throttler-behind-proxy.guard';
-import { MailModule } from './mail/mail.module';
 import { AbilityModule } from './ability/ability.module';
 import { ApplicationModule } from './modules/application/application.module';
-import { ExampleModule } from './modules/example/example.module';
 
 @Module({
   imports: [
@@ -54,17 +51,11 @@ import { ExampleModule } from './modules/example/example.module';
         limit: 100,
       },
     ]),
-    UrlGeneratorModule.forRoot({
-      secret: appConfig().app.key,
-      appUrl: appConfig().app.url,
-    }),
     // General modules
     PrismaModule,
     AuthModule,
     AbilityModule,
-    MailModule,
     ApplicationModule,
-    ExampleModule, // Example module
   ],
   controllers: [AppController],
   providers: [
