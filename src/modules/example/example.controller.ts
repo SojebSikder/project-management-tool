@@ -40,7 +40,7 @@ export class ExampleController {
   }
 
   @ApiOperation({ summary: 'Test' })
-  @CheckAbilities({ action: Action.Create, subject: 'Group' })
+  @CheckAbilities({ action: Action.Create, subject: 'Example' })
   @Get('test')
   async test(@Req() req: Request) {
     const user = req.user;

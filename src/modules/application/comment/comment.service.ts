@@ -3,33 +3,63 @@ import { PrismaClient } from '@prisma/client';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { NotificationGateway } from '../notification/notification.gateway';
+import { NotificationRepository } from 'src/common/repository/notification/project.repository';
 
 @Injectable()
 export class CommentService extends PrismaClient {
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private readonly notificationGateway: NotificationGateway,
+  ) {
     super();
   }
 
   async create(user_id: string, createCommentDto: CreateCommentDto) {
     const comment = await this.comment.create({
       data: {
-        body: createCommentDto.body,
+        content: createCommentDto.content,
         user_id: user_id,
-        post_id: createCommentDto.post_id,
+        task_id: createCommentDto.task_id,
       },
     });
+
+    // get user_id from task id
+    const task = await this.prisma.task.findUnique({
+      where: {
+        id: createCommentDto.task_id,
+      },
+    });
+
+    // Create notification
+    const notificationMessage = 'New comment created';
+
+    await NotificationRepository.createNotification({
+      sender_id: user_id,
+      receiver_id: task.assigned_to,
+      text: notificationMessage,
+      type: 'comment',
+    });
+
+    // Emit notification to assigned member
+    this.notificationGateway.server
+      .to(task.assigned_to)
+      .emit('receiveNotification', {
+        message: notificationMessage,
+      });
+    // end create notification
 
     return comment;
   }
 
-  async findAll(post_id: string) {
+  async findAll(task_id: string) {
     const comments = await this.comment.findMany({
       where: {
-        post_id: post_id,
+        task_id: task_id,
       },
       select: {
         id: true,
-        body: true,
+        content: true,
         created_at: true,
         updated_at: true,
       },

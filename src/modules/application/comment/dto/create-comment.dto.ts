@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateCommentDto {
   @ApiProperty()
-  body: string;
+  content: string;
 
   @ApiProperty()
-  post_id: string;
+  task_id: string;
 }

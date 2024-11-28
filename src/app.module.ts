@@ -16,7 +16,6 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ThrottlerBehindProxyGuard } from './common/guard/throttler-behind-proxy.guard';
 import { MailModule } from './mail/mail.module';
 import { AbilityModule } from './ability/ability.module';
-import { SocketModule } from './socket/socket.module';
 import { ApplicationModule } from './modules/application/application.module';
 import { ExampleModule } from './modules/example/example.module';
 
@@ -64,7 +63,6 @@ import { ExampleModule } from './modules/example/example.module';
     AuthModule,
     AbilityModule,
     MailModule,
-    SocketModule,
     ApplicationModule,
     ExampleModule, // Example module
   ],

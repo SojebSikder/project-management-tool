@@ -7,13 +7,18 @@ import {
   Param,
   Delete,
   UseGuards,
+  Req,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AbilitiesGuard } from '../../../ability/abilities.guard';
+import { CheckAbilities } from '../../../ability/abilities.decorator';
+import { Action } from '../../../ability/ability.factory';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { AddMemberProjectDto } from './dto/add-member-project.dto';
 
 @ApiBearerAuth()
 @ApiTags('Project')
@@ -22,28 +27,151 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
+  @ApiOperation({ summary: 'Create project' })
+  // @CheckAbilities({ action: Action.Create, subject: 'Project' })
   @Post()
-  create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectService.create(createProjectDto);
+  async create(
+    @Req() req: Request,
+    @Body() createProjectDto: CreateProjectDto,
+  ) {
+    try {
+      const user_id = req.user.userId;
+      const project = await this.projectService.create(
+        user_id,
+        createProjectDto,
+      );
+
+      return project;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
   }
 
+  @ApiOperation({ summary: 'Read all projects' })
+  @CheckAbilities({ action: Action.Read, subject: 'Project' })
   @Get()
-  findAll() {
-    return this.projectService.findAll();
+  async findAll(@Req() req: Request) {
+    try {
+      const user_id = req.user.userId;
+      const project = await this.projectService.findAll(user_id);
+
+      return {
+        success: true,
+        data: project,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
   }
 
+  @ApiOperation({ summary: 'Show project' })
+  @CheckAbilities({ action: Action.Show, subject: 'Project' })
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.projectService.findOne(+id);
+  async findOne(@Req() req: Request, @Param('id') id: string) {
+    try {
+      const user_id = req.user.userId;
+      const project = await this.projectService.findOne(id, user_id);
+
+      return project;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
   }
 
+  @ApiOperation({ summary: 'Update project' })
+  @CheckAbilities({ action: Action.Update, subject: 'Project' })
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-    return this.projectService.update(+id, updateProjectDto);
+  async update(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+  ) {
+    try {
+      const user_id = req.user.userId;
+      const project = await this.projectService.update(
+        id,
+        user_id,
+        updateProjectDto,
+      );
+
+      return project;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
   }
 
+  @ApiOperation({ summary: 'Add member to project' })
+  @CheckAbilities({ action: Action.Create, subject: 'Project' })
+  @Post('add-member')
+  async addMember(
+    @Req() req: Request,
+    @Body() addMemberProjectDto: AddMemberProjectDto,
+  ) {
+    try {
+      const user_id = req.user.userId;
+      const project = await this.projectService.addMember(
+        user_id,
+        addMemberProjectDto,
+      );
+
+      return project;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
+  @ApiOperation({ summary: 'Remove member from project' })
+  @CheckAbilities({ action: Action.Create, subject: 'Project' })
+  @Post('remove-member')
+  async removeMember(
+    @Req() req: Request,
+    @Body() addMemberProjectDto: AddMemberProjectDto,
+  ) {
+    try {
+      const user_id = req.user.userId;
+      const project = await this.projectService.removeMember(
+        user_id,
+        addMemberProjectDto,
+      );
+
+      return project;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
+  @ApiOperation({ summary: 'Delete project' })
+  @CheckAbilities({ action: Action.Delete, subject: 'Project' })
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.projectService.remove(+id);
+  async remove(@Req() req: Request, @Param('id') id: string) {
+    try {
+      const user_id = req.user.userId;
+      const project = await this.projectService.remove(id, user_id);
+
+      return project;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
   }
 }

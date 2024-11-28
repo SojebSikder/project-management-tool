@@ -15,15 +15,19 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { AbilitiesGuard } from '../../../ability/abilities.guard';
+import { CheckAbilities } from '../../../ability/abilities.decorator';
+import { Action } from '../../../ability/ability.factory';
 
 @ApiBearerAuth()
-@ApiTags('Post')
-@UseGuards(JwtAuthGuard)
+@ApiTags('Comment')
+@UseGuards(JwtAuthGuard, AbilitiesGuard)
 @Controller('comment')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
   @ApiOperation({ summary: 'Create comment' })
+  @CheckAbilities({ action: Action.Create, subject: 'Comment' })
   @Post()
   async create(
     @Req() req: Request,
@@ -31,10 +35,10 @@ export class CommentController {
   ) {
     const user = req.user;
 
-    if (!createCommentDto.body) {
+    if (!createCommentDto.content) {
       return {
         success: false,
-        message: 'Comment body is required',
+        message: 'Comment content is required',
       };
     }
 
@@ -57,9 +61,10 @@ export class CommentController {
   }
 
   @ApiOperation({ summary: 'Find all comments' })
-  @Get(':post_id/all')
-  async findAll(@Param('post_id') post_id: string) {
-    const comment = await this.commentService.findAll(post_id);
+  @CheckAbilities({ action: Action.Read, subject: 'Comment' })
+  @Get(':task_id/all')
+  async findAll(@Param('task_id') task_id: string) {
+    const comment = await this.commentService.findAll(task_id);
 
     return {
       success: true,
@@ -78,6 +83,7 @@ export class CommentController {
   }
 
   @ApiOperation({ summary: 'Delete comment' })
+  @CheckAbilities({ action: Action.Delete, subject: 'Comment' })
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: Request) {
     const user = req.user;
