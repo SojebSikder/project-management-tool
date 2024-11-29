@@ -68,19 +68,6 @@ export class ProjectService extends PrismaClient {
       },
       include: {
         tasks: true,
-        project_members: {
-          select: {
-            user_id: true,
-            role_id: true,
-            user: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-              },
-            },
-          },
-        },
       },
     });
 
