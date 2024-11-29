@@ -358,6 +358,59 @@ export class TaskService extends PrismaClient {
     }
   }
 
+  async resolveOrder(user_id: string) {
+    try {
+      // Fetch all dependencies
+      const result = await this.prisma.taskDependency.findMany();
+      // Build adjacency list and in-degree count
+      const adjacencyList = {};
+      const inDegree = {};
+
+      result.forEach(({ parent_task_id, task_id }) => {
+        adjacencyList[parent_task_id] = adjacencyList[parent_task_id] || [];
+        adjacencyList[parent_task_id].push(task_id);
+
+        inDegree[task_id] = (inDegree[task_id] || 0) + 1;
+        inDegree[parent_task_id] = inDegree[parent_task_id] || 0;
+      });
+
+      // Topological Sort
+      const queue = [];
+      const resolvedOrder = [];
+
+      Object.keys(inDegree).forEach((task) => {
+        if (inDegree[task] === 0) queue.push(parseInt(task));
+      });
+
+      while (queue.length > 0) {
+        const task = queue.shift();
+        resolvedOrder.push(task);
+
+        (adjacencyList[task] || []).forEach((child) => {
+          inDegree[child]--;
+          if (inDegree[child] === 0) queue.push(child);
+        });
+      }
+
+      // Check for unresolved tasks (cycle detection)
+      if (resolvedOrder.length !== Object.keys(inDegree).length) {
+        return {
+          success: false,
+          message: 'Circular dependencies detected',
+        };
+      }
+      return {
+        success: true,
+        data: resolvedOrder,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
   // remove dependency
   async removeDependency(id: string, dependency_id: string, user_id: string) {
     try {
