@@ -290,6 +290,29 @@ export class TaskService extends PrismaClient {
   // add dependency
   async addDependency(id: string, dependency_id: string, user_id: string) {
     try {
+      // Prevent circular dependencies
+      // run raw query to check if there is a circular dependency
+      const circularDependency = await this.prisma.$queryRaw`
+        WITH RECURSIVE task_dependencies AS (
+        SELECT parent_task_id, child_task_id 
+        FROM task_dependencies
+        WHERE parent_task_id = ${id}
+        UNION
+        SELECT td.parent_task_id, td.child_task_id
+        FROM task_dependencies td
+        INNER JOIN task_dependencies dc
+        ON td.parent_task_id = dc.child_task_id
+      )
+      SELECT 1 FROM task_dependencies WHERE child_task_id = ${dependency_id};
+      `;
+
+      if (circularDependency.length > 0) {
+        return {
+          success: false,
+          message: 'Circular dependency detected',
+        };
+      }
+
       const task = await this.prisma.task.findUnique({
         where: {
           id: id,
