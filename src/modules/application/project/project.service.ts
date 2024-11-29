@@ -66,9 +66,6 @@ export class ProjectService extends PrismaClient {
         id: id,
         user_id,
       },
-      include: {
-        tasks: true,
-      },
     });
 
     if (project) {
