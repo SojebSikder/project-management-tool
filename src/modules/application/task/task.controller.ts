@@ -166,4 +166,22 @@ export class TaskController {
       };
     }
   }
+
+  // resolve order
+  @ApiOperation({ summary: 'Resolve order' })
+  @CheckAbilities({ action: Action.Read, subject: 'Task' })
+  @Get('resolve-order')
+  async resolveOrder(@Req() req: Request) {
+    try {
+      const user_id = req.user.userId;
+      const task = await this.taskService.resolveOrder(user_id);
+
+      return task;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
 }

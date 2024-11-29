@@ -219,10 +219,10 @@ model Project {
   name        String?
   description String? @db.Text
 
-  user_id       String?
-  user          User?           @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  Task          Task[]
-  ProjectMember ProjectMember[]
+  user_id         String?
+  user            User?           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  tasks           Task[]
+  project_members ProjectMember[]
 
   @@map("projects")
 }

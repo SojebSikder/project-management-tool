@@ -41,26 +41,13 @@ export default () => ({
     from: process.env.MAIL_FROM_NAME,
   },
 
-  auth: {
-    // facebook: {
-    //   app_id: process.env.FACEBOOK_APP_ID,
-    //   app_secret: process.env.FACEBOOK_APP_SECRET,
-    //   callback: process.env.FACEBOOK_CALLBACK_URL,
-    // },
-  },
+  auth: {},
 
   defaultUser: {
     system: {
       username: process.env.SYSTEM_USERNAME,
       email: process.env.SYSTEM_EMAIL,
       password: process.env.SYSTEM_PASSWORD,
-    },
-  },
-
-  payment: {
-    stripe: {
-      publishable_key: process.env.STRIPE_PUBLISHABLE_KEY,
-      secret_key: process.env.STRIPE_SECRET_KEY,
     },
   },
 });
