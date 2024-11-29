@@ -292,7 +292,7 @@ export class TaskService extends PrismaClient {
     try {
       // Prevent circular dependencies
       // run raw query to check if there is a circular dependency
-      const circularDependency = await this.prisma.$queryRaw`
+      const circularDependency: any = await this.prisma.$queryRaw`
         WITH RECURSIVE task_dependencies AS (
         SELECT parent_task_id, child_task_id 
         FROM task_dependencies
