@@ -98,6 +98,28 @@ export class TaskController {
     }
   }
 
+  // update status
+  @ApiOperation({ summary: 'Update status' })
+  @CheckAbilities({ action: Action.Update, subject: 'Task' })
+  @Post(':id/status')
+  async updateStatus(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
+    try {
+      const user_id = req.user.userId;
+      const task = await this.taskService.updateStatus(id, user_id, status);
+
+      return task;
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
   @ApiOperation({ summary: 'Delete task' })
   @CheckAbilities({ action: Action.Delete, subject: 'Task' })
   @Delete(':id')
