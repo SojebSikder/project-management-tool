@@ -254,6 +254,72 @@ export class TaskService extends PrismaClient {
     }
   }
 
+  async updateStatus(id: string, user_id: string, status: string) {
+    try {
+      const task = await this.prisma.task.findUnique({
+        where: {
+          id: id,
+        },
+      });
+
+      if (!task) {
+        return {
+          success: false,
+          message: 'Task does not exist',
+        };
+      }
+
+      await this.prisma.task.update({
+        where: {
+          id: id,
+        },
+        data: {
+          status: status,
+        },
+      });
+
+      // send notification for task status change
+      if (status != task.status) {
+        const projectMember = await this.prisma.projectMember.findMany({
+          where: {
+            user_id: user_id,
+          },
+        });
+
+        projectMember.map(async (member) => {
+          if (member.user_id != user_id) {
+            const notificationMessage = `Task status changed to: ${status}`;
+
+            await NotificationRepository.createNotification({
+              sender_id: user_id,
+              receiver_id: member.user_id,
+              text: notificationMessage,
+              type: 'task',
+            });
+
+            // Emit notification to assigned member
+            this.notificationGateway.server
+              .to(member.user_id)
+              .emit('receiveNotification', {
+                message: notificationMessage,
+              });
+            // end create notification
+          }
+        });
+      }
+
+      return {
+        success: true,
+        message: 'Task status updated successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Something went wrong',
+      };
+    }
+  }
+
   async remove(id: string, user_id: string) {
     try {
       const task = await this.prisma.task.findUnique({

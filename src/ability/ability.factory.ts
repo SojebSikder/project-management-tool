@@ -10,6 +10,7 @@ export enum Action {
   Update = 'update',
   Show = 'show',
   Delete = 'delete',
+  Assign = 'assign',
 }
 
 export type AppSubjects = Subjects<{
